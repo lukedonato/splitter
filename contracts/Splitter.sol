@@ -5,9 +5,14 @@ contract Splitter {
     address payable public address1;
     address payable public address2;
 
-    event Transfer(uint256 indexed _aliceBalance, uint256 indexed _bobBalance, uint256 _CarolBalance);
+    mapping (address => uint) balances;
+
+    event paymentReceived();
+    event paymentWithdrawn(address indexed _to);
     
     constructor(address payable bobAddress, address payable carolAddress) public {
+        // ensure both addreses are passed in when deployed
+        require(address(bobAddress) != address(0) && address(carolAddress) != address(0));
         // assume alice will deploy the contract
         aliceAddress = msg.sender;
         address1 = bobAddress;
@@ -15,10 +20,26 @@ contract Splitter {
 
     }
 
-    function() payable external {
+    function splitPayment() payable external {
         require(msg.sender == aliceAddress);
-        address1.transfer(msg.value / 2);
-        address2.transfer(msg.value / 2);
-        emit Transfer(aliceAddress.balance, address1.balance, address2.balance);
+        require(msg.value % 2 == 0);
+
+        uint halfAmount = msg.value / 2;
+
+        balances[address1] += halfAmount;
+        balances[address2] += halfAmount;
+
+        emit paymentReceived();
+    }
+
+    function withdrawPayment() external {
+        uint withdrawerBalance = balances[msg.sender];
+
+        require(withdrawerBalance > 0);
+
+        balances[msg.sender] = 0;
+        msg.sender.transfer(withdrawerBalance);
+        
+        emit paymentWithdrawn(msg.sender);
     }
 }
