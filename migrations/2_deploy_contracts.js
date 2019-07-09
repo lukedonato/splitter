@@ -1,8 +1,8 @@
-const ConvertLib = artifacts.require("ConvertLib");
 const Splitter = artifacts.require("Splitter");
+const SafeMath = artifacts.require("./SafeMath.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(ConvertLib);
-  deployer.link(ConvertLib, Splitter);
+  deployer.deploy(SafeMath);
+  deployer.link(SafeMath, Splitter);
   deployer.deploy(Splitter);
 };
