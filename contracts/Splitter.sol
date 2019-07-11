@@ -1,41 +1,37 @@
 pragma solidity 0.5.0;
 
 import "./SafeMath.sol";
+import "./Pausable.sol";
 
-contract Splitter {
+contract Splitter is Pausable {
     using SafeMath for uint;
 
     mapping (address => uint) balances;
 
-    event PaymentReceived(address indexed from, uint value);
-    event PaymentWithdrawn(address indexed to);
+    event PaymentReceived(address indexed from, uint indexed value, address to1, address to2);
+    event PaymentWithdrawn(address indexed to, uint indexed amountWithdrawn);
 
     function splitPayment(address address1, address address2) payable external {
-        address depositer = msg.sender;
-        uint depositValue = msg.value;
-        uint halfAmount;
+        require(address(address1) != address(0));
+        require(address(address2) != address(0));
 
-        if (depositValue % 2 == 0) {
-            halfAmount = depositValue.div(2);
-        } else { // if odd amount of wei then we should store it back so depositer can claim it
-            halfAmount = (depositValue - 1).div(2);
-            balances[depositer] = balances[depositer].add(1);
-        }
+        balances[address1] = balances[address1].add(msg.value.div(2));
+        balances[address2] = balances[address2].add(msg.value.div(2));
+        balances[msg.sender] = balances[msg.sender].add(msg.value % 2);
 
-        balances[address1] = balances[address1].add(halfAmount);
-        balances[address2] = balances[address2].add(halfAmount);
+        emit PaymentReceived(msg.sender, msg.value, address1, address2);
+    }
 
-        emit PaymentReceived(msg.sender, msg.value);
+    function getAddressBalance() public view returns (uint) {
+        return balances[msg.sender];
     }
 
     function withdrawPayment() external {
-        uint withdrawerBalance = balances[msg.sender];
-
-        require(withdrawerBalance > 0);
+        require(balances[msg.sender] > 0);
 
         balances[msg.sender] = 0;
-        emit PaymentWithdrawn(msg.sender);
+        emit PaymentWithdrawn(msg.sender, balances[msg.sender]);
 
-        msg.sender.transfer(withdrawerBalance);   
+        msg.sender.transfer(balances[msg.sender]);   
     }
 }
