@@ -1,13 +1,13 @@
 const Splitter = artifacts.require("Splitter");
-const SafeMath = artifacts.require("./SafeMath.sol");
-const Roles = artifacts.require("./Roles.sol");
-const PausableRole = artifacts.require("./PausableRole.sol");
-const Pausable = artifacts.require("./Pausable.sol");
+const SafeMath = artifacts.require("../contracts/SafeMath.sol");
+const Roles = artifacts.require("../contracts/Roles.sol");
+const PausableRole = artifacts.require("../contracts/PausableRole.sol");
+const Pausable = artifacts.require("../contracts/Pausable.sol");
 
 module.exports = function(deployer) {
   deployer.deploy(SafeMath);
-  deployer.deploy(Splitter);
   deployer.deploy(Roles);
   deployer.deploy(PausableRole);
   deployer.deploy(Pausable);
+  deployer.deploy(Splitter);
 };
