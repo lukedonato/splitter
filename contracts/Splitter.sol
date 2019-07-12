@@ -11,7 +11,7 @@ contract Splitter is Pausable {
     event PaymentReceived(address indexed from, uint indexed value, address to1, address to2);
     event PaymentWithdrawn(address indexed to, uint indexed amountWithdrawn);
 
-    function splitPayment(address address1, address address2) payable external {
+    function splitPayment(address address1, address address2) payable external returns (bool) {
         require(address(address1) != address(0));
         require(address(address2) != address(0));
 
@@ -20,18 +20,22 @@ contract Splitter is Pausable {
         balances[msg.sender] = balances[msg.sender].add(msg.value % 2);
 
         emit PaymentReceived(msg.sender, msg.value, address1, address2);
+
+        return true;
     }
 
     function getAddressBalance() public view returns (uint) {
         return balances[msg.sender];
     }
 
-    function withdrawPayment() external {
+    function withdrawPayment() external returns (bool) {
         require(balances[msg.sender] > 0);
 
         balances[msg.sender] = 0;
         emit PaymentWithdrawn(msg.sender, balances[msg.sender]);
 
         msg.sender.transfer(balances[msg.sender]);   
+
+        return true;
     }
 }

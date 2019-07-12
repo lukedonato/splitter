@@ -1,51 +1,38 @@
-const Promise = require("bluebird");
 const Splitter = artifacts.require("./Splitter.sol");
 
-Promise.promisifyAll(web3.eth, { suffix: "Promise" });
-
 contract('Splitter', (accounts) => {
-  const owner = accounts[0];
-  const receiver1 = accounts[2];
-  const receiver2 = accounts[3];
+  const [owner, receiver1, receiver2] = accounts;
 
-  beforeEach(() => {
-    return Splitter.new({ from: owner })
-    .then((instance) => {
-      contractInstance = instance;
-    });
+  beforeEach(async () => {
+    contractInstance = await Splitter.new({ from: owner });
   });
 
-  it("Should set owner", () => {
-    return contractInstance.owner({from: owner})
-    .then((result) => {
-      assert.strictEqual(result, owner, "contract owner isn't deployer");
-    });
+  it("Should set owner", async () => {
+    const owner = await contractInstance.owner({ from: owner });
+
+    assert.strictEqual(result, owner, "contract owner isn't deployer");
   });
 
-  it("split sent ether", () => {
+  it("split sent ether", async () => {
     const sendAmount = 100;
 
-    return contractInstance.splitPayment(receiver1, receiver2, {from: owner, value: sendAmount})
-    .then((result) => {
-      assert.equal(result.receipt.status, true, "splitPaymemnt error");
-      return contractInstance.splitAmounts.call(receiver1, {from: owner});
-    })
-    .then((result) => {
-      assert.strictEqual(result.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
-      return contractInstance.splitAmounts.call(receiver2, {from: owner});
-    })
-    .then((result) => {
-      assert.strictEqual(result.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
-    });
+    const res1 = contractInstance.splitPayment(receiver1, receiver2, { from: owner, value: sendAmount });
+    assert.equal(res1.receipt.status, true, "splitPaymemnt error");
+
+    const res2 = contractInstance.balances.call(receiver1, { from: owner });
+    assert.strictEqual(res2.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
+
+    const res3 = contractInstance.balances.call(receiver2, { from: owner });
+    assert.strictEqual(res3.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
   });
 
   describe("withdrawal check", () => {
-    beforeEach("Run the split", () => {
+    beforeEach("split", () => {
       const sendAmount = 100;
-      return contractInstance.splitMembers(receiver1, receiver2, {from: owner, value: sendAmount});
+      return contractInstance.splitPayment(receiver1, receiver2, {from: owner, value: sendAmount});
     })
 
-    it("should withdraw from balances", () => {
+    it("should withdraw from balances", async () => {
       var hash;
       var gasPrice = 0;
       var gasUsed = 0;
@@ -55,30 +42,22 @@ contract('Splitter', (accounts) => {
       var balanceBefore;
       var balanceNow;
 
-      return new Promise((resolve, reject) => {
-        web3.eth.getBalance(receiver1, (err, balance) => {
-          err ? reject(err) : resolve(balance);
-        });
-      })
-      .then((balance) => {
-        balanceBefore = balance;
-        return contractInstance.requestWithdraw({from: receiver1});
-      })
-      .then((txObj) => {
-        hash = txObj.receipt.transactionHash;
-        gasUsed = txObj.receipt.gasUsed;
-        return web3.eth.getTransactionPromise(hash);
-      })
-      .then((tx) => {
-        gasPrice = tx.gasPrice;
-        return web3.eth.getBalancePromise(receiver1);
-      })
-      .then((balance) => {
-        balanceNow = balance;
-        receiveAmount = sendAmount / 2;
-        txFee = gasUsed * gasPrice;
-        assert.strictEqual(balanceNow.toString(10), balanceBefore.plus(receiveAmount).minus(txFee).toString(10), "wrong balance");
-      });
+      const receiver1Balance = await web3.eth.getBalance(receiver1);
+      balanceBefore = receiver1Balance;
+
+      const txObj = await contractInstance.withdrawPayment({ from: receiver1 });
+      hash = txObj.receipt.transactionHash;
+      gasUsed = txObj.receipt.gasUsed;
+
+      const tx = await web3.eth.getTransactionPromise(hash);
+      gasPrice = tx.gasPrice;
+
+      const balance = await web3.eth.getBalancePromise(receiver1);
+      balanceNow = balance;
+      receiveAmount = sendAmount / 2;
+      txFee = gasUsed * gasPrice;
+      
+      assert.strictEqual(balanceNow.toString(10), balanceBefore.plus(receiveAmount).minus(txFee).toString(10), "wrong balance");
     });
   });
 });
