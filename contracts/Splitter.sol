@@ -30,11 +30,12 @@ contract Splitter is Pausable {
 
     function withdrawPayment() external returns (bool) {
         require(balances[msg.sender] > 0);
+        uint withdrawerBalance = balances[msg.sender];
 
         balances[msg.sender] = 0;
         emit PaymentWithdrawn(msg.sender, balances[msg.sender]);
 
-        msg.sender.transfer(balances[msg.sender]);   
+        msg.sender.transfer(withdrawerBalance);   
 
         return true;
     }
