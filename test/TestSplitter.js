@@ -2,6 +2,7 @@ const Splitter = artifacts.require("./Splitter.sol");
 
 contract('Splitter', (accounts) => {
   const [owner, receiver1, receiver2] = accounts;
+  let contractInstance;
 
   beforeEach(async () => {
     contractInstance = await Splitter.new({ from: owner });
@@ -17,13 +18,13 @@ contract('Splitter', (accounts) => {
     const sendAmount = 100;
 
     const res1 = contractInstance.splitPayment(receiver1, receiver2, { from: owner, value: sendAmount });
-    assert.equal(res1.receipt.status, true, "splitPaymemnt error");
+    assert.isTrue(res1.receipt.status, true, "splitPaymemnt error");
 
     const res2 = contractInstance.balances.call(receiver1, { from: owner });
-    assert.strictEqual(res2.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
+    assert.strictEqual(res2.toString(10), "50", "incorrect amount");
 
     const res3 = contractInstance.balances.call(receiver2, { from: owner });
-    assert.strictEqual(res3.toString(10), (sendAmount / 2).toString(10), "incorrect amount");
+    assert.strictEqual(res3.toString(10), "50", "incorrect amount");
   });
 
   describe("withdrawal check", () => {
@@ -54,7 +55,7 @@ contract('Splitter', (accounts) => {
 
       const balance = await web3.eth.getBalancePromise(receiver1);
       balanceNow = balance;
-      receiveAmount = sendAmount / 2;
+      receiveAmount = 50;
       txFee = gasUsed * gasPrice;
       
       assert.strictEqual(balanceNow.toString(10), balanceBefore.plus(receiveAmount).minus(txFee).toString(10), "wrong balance");
