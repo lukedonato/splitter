@@ -6,7 +6,7 @@ import "./Pausable.sol";
 contract Splitter is Pausable {
     using SafeMath for uint;
 
-    mapping (address => uint) balances;
+    mapping (address => uint) public balances;
 
     event PaymentReceived(address indexed from, uint indexed value, address to1, address to2);
     event PaymentWithdrawn(address indexed to, uint indexed amountWithdrawn);
@@ -16,8 +16,8 @@ contract Splitter is Pausable {
         require(address(address2) != address(0));
 
         uint divByTwo = msg.value.div(2);
-        balances[address1] = balances[address1].add(divByTwo));
-        balances[address2] = balances[address2].add(divByTwo));
+        balances[address1] = balances[address1].add(divByTwo);
+        balances[address2] = balances[address2].add(divByTwo);
         balances[msg.sender] = balances[msg.sender].add(msg.value.mod(2));
 
         emit PaymentReceived(msg.sender, msg.value, address1, address2);

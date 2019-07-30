@@ -1,0 +1,23 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "splitter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "create-html": "^4.1.0",
+    "file-loader": "^4.1.0",
+    "webpack": "^4.38.0",
+    "webpack-cli": "^3.3.6"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.5",
+    "jquery": "^3.4.1",
+    "truffle-contract": "^4.0.26",
+    "web3": "^1.0.0-beta.37"
+  }
+}
