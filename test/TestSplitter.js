@@ -18,7 +18,7 @@ contract('Splitter', (accounts) => {
     const sendAmount = 100;
 
     const res1 = contractInstance.splitPayment(receiver1, receiver2, { from: owner, value: sendAmount });
-    assert.isTrue(res1.receipt.status, true, "splitPaymemnt error");
+    assert.isTrue(res1.receipt.status, "splitPayment error");
 
     const res2 = contractInstance.balances.call(receiver1, { from: owner });
     assert.strictEqual(res2.toString(10), "50", "incorrect amount");
@@ -34,21 +34,20 @@ contract('Splitter', (accounts) => {
     })
 
     it("should withdraw from balances", async () => {
-      var hash;
-      var gasPrice = 0;
-      var gasUsed = 0;
-      var txFee = 0;
-      var sendAmount = 1000;
-      var receiveAmount = 0;
-      var balanceBefore;
-      var balanceNow;
+      let gasPrice = 0;
+      let gasUsed = 0;
+      let txFee = 0;
+      let receiveAmount = 0;
+      let balanceBefore;
+      let balanceNow;
 
       const receiver1Balance = await web3.eth.getBalance(receiver1);
       balanceBefore = receiver1Balance;
 
       const txObj = await contractInstance.withdrawPayment({ from: receiver1 });
-      hash = txObj.receipt.transactionHash;
+      const hash = txObj.receipt.transactionHash;
       gasUsed = txObj.receipt.gasUsed;
+      const log = txObj.logs[0];
 
       const tx = await web3.eth.getTransactionPromise(hash);
       gasPrice = tx.gasPrice;
@@ -57,8 +56,12 @@ contract('Splitter', (accounts) => {
       balanceNow = balance;
       receiveAmount = 50;
       txFee = gasUsed * gasPrice;
+
+      const newReceiverOneContractBalance = await contractInstance.getAddressBalance(receiver1);
       
       assert.strictEqual(balanceNow.toString(10), balanceBefore.plus(receiveAmount).minus(txFee).toString(10), "wrong balance");
+      assert.strictEqual(newReceiverOneContractBalance.toString(10), "0", "did not withdraw full balance");
+      assert.strictEqual(log.event, "PaymentWithdrawn");
     });
   });
 });

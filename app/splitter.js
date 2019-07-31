@@ -54,13 +54,30 @@ async function split() {
         const value = web3.utils.toWei($('#split-input').val());
         const splitter = await Splitter.deployed();
 
+        // simulate split
+        assert(await splitter.splitPayment.call(
+            recipient1,
+            recipient2,
+            { from: account, value }
+        ), 'transaction will fail');
+
         const tx = await splitter.splitPayment(
             recipient1,
             recipient2,
             { from: account, value }
+        )
+        .on(
+            'transactionHash',
+            () => $('#split-status').html('transaction sent')
         );
         
         printReceipt(tx.receipt);
+
+        if (tx.receipt.logs[0]) {
+            $('#split-status').html('transaction succeeded');
+        } else {
+            $('#split-status').html('transaction failed');
+        }
     } catch (err) {
         console.error(err);
     }
